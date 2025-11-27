@@ -1,31 +1,51 @@
-from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.Hash import SHA256
 from Crypto.Signature import pss
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 from Crypto.Util import number
 from binascii import hexlify, unhexlify
+from voter_list import VoterList
 
 import base64
 import json
 import math
 
-def hash(message): return SHA256.new(message)
+def hash(message): return SHA256.new(message.encode())
 
 def generate_key():
     key = RSA.generate(2048)
     return key, key.public_key()
 
-def encrypt(m, public_key):
-    cipher = PKCS1_OAEP.new(public_key)
-    result = cipher.encrypt(m)
-    return hexlify(result)
+def encrypt(m : bytes, public_key) -> str:
+    rsa_cipher = PKCS1_OAEP.new(public_key)
+    aes_key = get_random_bytes(32)
+    enc_aes_key = rsa_cipher.encrypt(aes_key)
 
-def decrypt(m, private_key):
-    m = unhexlify(m)
-    cipher = PKCS1_OAEP.new(private_key)
-    result = cipher.decrypt(m)
-    return result.decode('utf-8')
+    aes_cipher = AES.new(aes_key, AES.MODE_GCM)
+    ciphertext, tag = aes_cipher.encrypt_and_digest(m)
+
+    package = {
+        "enc_key": base64.b64encode(enc_aes_key).decode(),
+        "nonce": base64.b64encode(aes_cipher.nonce).decode(),
+        "tag": base64.b64encode(tag).decode(),
+        "ciphertext": base64.b64encode(ciphertext).decode()
+    }
+    return json.dumps(package)
+
+def decrypt(package_json : str, private_key) -> str:
+    package = json.loads(package_json)
+    enc_key = base64.b64decode(package["enc_key"])
+    nonce = base64.b64decode(package["nonce"])
+    tag = base64.b64decode(package["tag"])
+    ciphertext = base64.b64decode(package["ciphertext"])
+
+    rsa_cipher = PKCS1_OAEP.new(private_key)
+    aes_key = rsa_cipher.decrypt(enc_key)
+
+    aes_cipher = AES.new(aes_key, AES.MODE_GCM, nonce=nonce)
+    plaintext = aes_cipher.decrypt_and_verify(ciphertext, tag)
+    return plaintext.decode()
 
 def sign(hash, private_key):
     signer = pss.new(private_key)
@@ -72,16 +92,47 @@ def verify_blind_signature(signed, hash, public_key):
     m = int_from_bytes(hash.digest())
     return m == pow(signed, public_key.e, public_key.n)
 
-def construct_message(id : int, code : str, text : str) -> str:
+def construct_message(id : int, code : str, text : str, s_priv_key, k_pub_key) -> str:
+    h = hash(text)
+
+    signature = sign(h, s_priv_key)
+
+    sign_string = json.dumps({
+        'signature' : signature,
+        'text' : text
+    })
+    
+    encrypted = encrypt(sign_string.encode(), k_pub_key)
+
     return json.dumps({
         'id' : id,
         'code' : code,
-        'text' : text
+        'text' : encrypted
     }).encode()
 
-def deconstruct_message(string : str):
+def deconstruct_message(string : str, s_pub_key, k_priv_key):
     bundle = json.loads(string)
-    return bundle['id'], bundle['code'], bundle['text']
+    id = bundle['id']
+    code = bundle['code']
+    encrypted = bundle['text']
+
+    if s_pub_key is None:
+        v = VoterList()
+        v.read()
+        s_pub_key = v.get_public_keys()[str(id)]['public_key']
+
+    sign_string = decrypt(encrypted, k_priv_key)
+    sign_bundle = json.loads(sign_string)
+
+    signature = sign_bundle['signature']
+    text = sign_bundle['text']
+    h = hash(text)
+
+    if verify(signature, h, s_pub_key):
+        return id, code, text, s_pub_key
+    else:
+        print('Signature invalid')
+        return
 
 # d,e = generate_key()
 # m = b'This is a message'

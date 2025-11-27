@@ -7,7 +7,7 @@ from tools import construct_message, deconstruct_message
 HOST = "127.0.0.1"
 REGISTRATION_SERVER_PORT = 2137
 BALLOT_BOX_SERVER_PORT = 2138
-BUFFER_SIZE = 1024
+BUFFER_SIZE = 4096
 
 def authenticate():
     # just a filler
@@ -37,13 +37,13 @@ def connect_to_server(server_port) -> socket:
     print(f"Connected to registration server at {HOST}:{server_port}")
     return s
 
-def send_welcome(s : socket, id : int):
+def send_welcome(s : socket, id : int, serv_pub_key, my_key):
     if id == -1:
         print('Incorrect ID')
         exit(3)
 
-    data = talk(s, construct_message(id, 'WEL', 'welcome'))
-    serv_id, code, text = deconstruct_message(data)
+    data = talk(s, construct_message(id, 'WEL', 'welcome', my_key, serv_pub_key))
+    serv_id, code, text, useless = deconstruct_message(data, serv_pub_key, my_key)
 
     print(f"Serwer {serv_id}: {code}, {text}")
         
@@ -58,13 +58,11 @@ def talk(s : socket, message):
 def main():
     id, private, public = authenticate()
 
-    serv_pub_key = public['0']
+    serv_pub_key = public['0']['public_key']
+    my_priv_key = private['private_key']
     
-
-
     s = connect_to_server(REGISTRATION_SERVER_PORT)
-    # print(talk(s, 'heeellooo'))
-    send_welcome(s, id)
+    send_welcome(s, id, serv_pub_key, my_priv_key)
     while True: pass
 
 if __name__ == "__main__": main()
