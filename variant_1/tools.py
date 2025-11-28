@@ -4,8 +4,8 @@ from Crypto.Signature import pss
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 from Crypto.Util import number
-from binascii import hexlify, unhexlify
 from voter_list import VoterList
+from typing import Union
 
 import base64
 import json
@@ -46,6 +46,37 @@ def decrypt(package_json : str, private_key) -> str:
     aes_cipher = AES.new(aes_key, AES.MODE_GCM, nonce=nonce)
     plaintext = aes_cipher.decrypt_and_verify(ciphertext, tag)
     return plaintext.decode()
+
+def _b64_encode(b: bytes) -> str:
+    return base64.b64encode(b).decode('ascii')
+
+def _b64_decode(s: str) -> bytes:
+    return base64.b64decode(s.encode('ascii'))
+
+def generate_aes_key(size: int = 32) -> bytes:
+    return get_random_bytes(size)
+
+def aes_encrypt(plaintext: bytes, key: bytes) -> str:
+    cipher = AES.new(key, AES.MODE_GCM)
+    ciphertext, tag = cipher.encrypt_and_digest(plaintext)
+    
+    return json.dumps({
+        "ciphertext": _b64_encode(ciphertext),
+        "nonce": _b64_encode(cipher.nonce),
+        "tag": _b64_encode(tag)
+    })
+
+def aes_decrypt(json_blob: Union[str, bytes], key: bytes) -> bytes:
+    if isinstance(json_blob, bytes):
+        json_blob = json_blob.decode('utf-8')
+    obj = json.loads(json_blob)
+
+    ciphertext = _b64_decode(obj["ciphertext"])
+    nonce = _b64_decode(obj["nonce"])
+    tag = _b64_decode(obj["tag"])
+
+    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+    return cipher.decrypt_and_verify(ciphertext, tag)
 
 def sign(hash, private_key):
     signer = pss.new(private_key)
