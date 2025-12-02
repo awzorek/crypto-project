@@ -8,16 +8,24 @@ class VoterList:
 
     def __init__(self):
         self.__list.clear()
+        self.read()
     
-    def generate(self):
+    def generate(self, num : int):
         self.__list.clear()
         # 0 - registration server
-        # 1-4 - voters
-        for i in range(5):
+        # 1 - ballot box server
+        # 2 - root
+        # 3-... - voters
+        for i in range(num):
             key = RSA.generate(2048)
             # everytime e is 65537, can be set different in RSA.generate
+            if i == 0: name = 'Registration Server'
+            elif i == 1: name = 'Ballot Box Server'
+            elif i == 2: name = 'Root'
+            else: name = f"voter{i}"
+
             self.__list[i] = {
-                'name' : f"voter{i}",
+                'name' : name,
                 'n' : key.n,
                 'e' : key.e,
                 'd' : key.d
@@ -32,8 +40,6 @@ class VoterList:
         with open('keys') as f:
             string = f.read()
             self.__list = json.loads(string)
-
-    # def show(self, i): print(self.__list[str(i)])
     
     def get_private_key(self, i):
         d = self.__list[str(i)]

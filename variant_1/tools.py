@@ -149,7 +149,6 @@ def deconstruct_message(string : str, s_pub_key, k_priv_key):
 
     if s_pub_key is None:
         v = VoterList()
-        v.read()
         s_pub_key = v.get_public_keys()[str(id)]['public_key']
 
     sign_string = decrypt(encrypted, k_priv_key)
