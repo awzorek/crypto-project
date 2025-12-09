@@ -3,10 +3,10 @@ import json
 import socket
 import threading
 
-from voter_list import VoterList
 from ballot_list import BallotList
-from tools import verify_blind_signature, hash
 from tools import construct_message, deconstruct_message
+from tools import verify_blind_signature, hash
+from voter_list import VoterList
 
 HOST = "127.0.0.1"
 PORT = 2138
@@ -26,33 +26,45 @@ def get_ballot():
     with open('ballot') as f:
         return json.loads(f.read())
 
-def check_and_publish_ballot(string : str, conn : socket, client_key, my_key, reg_serv_pub_key):
+def check_and_publish_ballot(id : int, string : str, conn : socket, client_key, my_key, reg_serv_pub_key):
+    print(f"Voter {id}: requesting encrypted ballot to be published")
+
     package = json.loads(string)
     signed_m_BS = package['signed_m_BS']
     m_BS = package['m_BS']
+
     if not verify_blind_signature(signed_m_BS, hash(m_BS), reg_serv_pub_key):
         print("Couldn't verify the blind signature")
         return
     with lock:
         i = b.append_m_BS(m_BS)
+    
+    print(f"Acknowledging the ballot got successfully published")
     conn.sendall(construct_message(BB_SERVER_ID, 'ACK', str(i), my_key, client_key))
 
-def check_if_published(string : str, conn : socket, client_key, my_key):
+def check_if_published(id : int, string : str, conn : socket, client_key, my_key):
+    print(f"Voter {id}: checking the list")
+
     package = json.loads(string)
     i = int(package['i'])
     m_BS = package['m_BS']
 
     with lock:
         text = 'TRUE' if b.check_if_published(i, m_BS) else 'FALSE'
+        print(f"Check result: {text}")
+        print(f"Answering voter {id}")
     conn.sendall(construct_message(BB_SERVER_ID, 'CIP_ANS', text, my_key, client_key))
 
-def add_symetrical_key(string : str, conn : socket, client_key, my_key):
+def add_symetrical_key(id : int, string : str, conn : socket, client_key, my_key):
+    print(f"Voter {id}: sending symmetrical key to decrypt a ballot")
+
     package = json.loads(string)
     i = int(package['i'])
     m = bytes.fromhex(package['m'])
 
     b.add_key(i, m)
 
+    print(f"Acknowledging the ballot was decrypted")
     conn.sendall(construct_message(BB_SERVER_ID, 'ACK', '', my_key, client_key))
 
 def summarise(client_key):
@@ -102,9 +114,9 @@ def handle_client(conn : socket.socket, addr, client_id : int, my_key, reg_serv_
 
             id, code, text, client_key = deconstruct_message(data.decode(errors='replace'), client_key, my_key)
 
-            if code == 'EB': check_and_publish_ballot(text, conn, client_key, my_key, reg_serv_pub_key)
-            elif code == 'CIP': check_if_published(text, conn, client_key, my_key)
-            elif code == 'ASK': add_symetrical_key(text, conn, client_key, my_key)
+            if code == 'EB': check_and_publish_ballot(id, text, conn, client_key, my_key, reg_serv_pub_key)
+            elif code == 'CIP': check_if_published(id, text, conn, client_key, my_key)
+            elif code == 'ASK': add_symetrical_key(id, text, conn, client_key, my_key)
             elif code == 'EOV' and text == 'EOV': summarise(client_key)
             else: print('Unknown code')
 

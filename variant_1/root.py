@@ -1,8 +1,8 @@
 import json
 import socket
 
+from tools import construct_message
 from voter_list import VoterList
-from tools import construct_message, deconstruct_message
 
 HOST = "127.0.0.1"
 BALLOT_BOX_SERVER_PORT = 2138

@@ -1,11 +1,12 @@
 from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.Hash import SHA256
-from Crypto.Signature import pss
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
+from Crypto.Signature import pss
 from Crypto.Util import number
-from voter_list import VoterList
+
 from typing import Union
+from voter_list import VoterList
 
 import base64
 import json

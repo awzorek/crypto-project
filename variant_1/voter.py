@@ -90,14 +90,17 @@ def check_if_ballot_published(s : socket, id : int, i : int, m_BS : str, serv_ke
     return False
 
 def add_symmetrical_key(s : socket, id : int, i : int, m : bytes, serv_key, my_key):
-    string = json.dumps({
-        'i' : i,
-        'm' : m.hex(),
-    })
-    _, code, _ = talk(s, id, 'ASK', string, my_key, serv_key)
-    if code == 'ACK':
-        print('Symmetrical key added to the list.')
-        print('Your vote was counted.')
+    try:
+        string = json.dumps({
+            'i' : i,
+            'm' : m.hex(),
+        })
+        _, code, _ = talk(s, id, 'ASK', string, my_key, serv_key)
+        if code == 'ACK':
+            print('Symmetrical key added to the list.')
+            print('Your vote was counted.')
+    except Exception as e:
+        print('Error:', e)
 
 def connect_to_server(server_port) -> socket:
     print(f"Trying to connect to server at {HOST}:{server_port}...")

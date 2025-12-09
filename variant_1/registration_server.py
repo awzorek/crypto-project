@@ -3,8 +3,8 @@ import json
 import socket
 import threading
 
-from voter_list import VoterList
 from tools import blind_sign, construct_message, deconstruct_message
+from voter_list import VoterList
 
 HOST = "127.0.0.1"
 PORT = 2137
@@ -21,16 +21,20 @@ def get_ballot():
 
 def send_empty_ballot(id : int, conn : socket, client_key, my_key):
     print(f"Voter {id}: requesting an empty ballot")
-    print(f"Answering voter {id}...")
 
     empty_ballot = get_ballot()
-
     empty_ballot_json = json.dumps(empty_ballot)
+
+    print(f"Answering voter {id}")
     conn.sendall(construct_message(REG_SERVER_ID, 'GEB_ANS', empty_ballot_json, my_key, client_key))
 
-def validate_ballot(text : str, conn : socket, client_key, my_key):
+def validate_ballot(id : int, text : str, conn : socket, client_key, my_key):
+    print(f"Voter {id}: requesting ballot validation")
+
     blinded_m_BS = int(text)
     signed = str(blind_sign(blinded_m_BS, my_key))
+
+    print(f"Validating ballot for voter {id}")
     conn.sendall(construct_message(REG_SERVER_ID, 'FB_ANS', signed, my_key, client_key))
 
 def handle_client(conn : socket.socket, addr, client_id : int, my_key):
@@ -44,7 +48,7 @@ def handle_client(conn : socket.socket, addr, client_id : int, my_key):
             id, code, text, client_key = deconstruct_message(data.decode(errors='replace'), client_key, my_key)
 
             if code == 'GEB': send_empty_ballot(id, conn, client_key, my_key)
-            elif code == 'FB': validate_ballot(text, conn, client_key, my_key)
+            elif code == 'FB': validate_ballot(id, text, conn, client_key, my_key)
 
     except ConnectionResetError:
         print(f"[-] Connection reset by client #{client_id} ({addr})")

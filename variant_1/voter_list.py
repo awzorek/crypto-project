@@ -1,5 +1,5 @@
-from Crypto.PublicKey import RSA
 from Crypto import Random
+from Crypto.PublicKey import RSA
 
 import json
 
