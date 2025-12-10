@@ -62,7 +62,7 @@ def main():
 
     while True:
         action = int(input('>'))
-        if action == 1: generate_ballot('Wybory na prezydenta Polski', ['Lech Adamus', 'Jacek R***a'])
+        if action == 1: generate_ballot('Wybory na prezydenta Polski', ['Jan Kowalski', 'Marcin Nowak'])
         elif action == 2: regenerate_keys(10)
         elif action == 3: end_voting()
         else: print('Wrong input. Try again.')
