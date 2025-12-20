@@ -129,34 +129,27 @@ def construct_message(id : int, code : str, text : str, s_priv_key, k_pub_key) -
 
     signature = sign(h, s_priv_key)
 
-    sign_string = json.dumps({
-        'signature' : signature,
-        'text' : text
-    })
-    
-    encrypted = encrypt(sign_string.encode(), k_pub_key)
-
-    return json.dumps({
+    package = {
         'id' : id,
         'code' : code,
-        'text' : encrypted
-    }).encode()
+        'signature' : signature,
+        'text' : text
+    }
+
+    return (encrypt(json.dumps(package).encode(), k_pub_key)).encode()
 
 def deconstruct_message(string : str, s_pub_key, k_priv_key):
-    bundle = json.loads(string)
-    id = bundle['id']
-    code = bundle['code']
-    encrypted = bundle['text']
+    package = json.loads(decrypt(string, k_priv_key))
+
+    id = package['id']
+    code = package['code']
+    signature = package['signature']
+    text = package['text']
 
     if s_pub_key is None:
         v = VoterList()
         s_pub_key = v.get_public_keys()[str(id)]['public_key']
-
-    sign_string = decrypt(encrypted, k_priv_key)
-    sign_bundle = json.loads(sign_string)
-
-    signature = sign_bundle['signature']
-    text = sign_bundle['text']
+    
     h = hash(text)
 
     if verify(signature, h, s_pub_key):
