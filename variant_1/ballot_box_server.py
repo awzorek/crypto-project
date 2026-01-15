@@ -4,8 +4,7 @@ import socket
 import threading
 
 from ballot_list import BallotList
-from tools import construct_message, deconstruct_message
-from tools import verify_blind_signature, hash
+from tools import construct_message, deconstruct_message, verify_blind_signature, hash
 from voter_list import VoterList
 
 HOST = "127.0.0.1"

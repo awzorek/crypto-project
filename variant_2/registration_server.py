@@ -11,26 +11,22 @@ BUFFER_SIZE = 4096
 REG_SERVER_ID = 0
 
 client_id_counter = itertools.count(1)
-
-# def get_ballot():
-#     with open('ballot') as f:
-#         return json.loads(f.read())
+signed_tokens = {}
+lock = threading.Lock()
 
 def sign_t_token(id : int, conn : socket, t_token : str, client_key, my_key):
+    if id in signed_tokens.keys():
+        print(f"Voter {id} trying to register again, sending already signed token.")
+        conn.sendall(construct_message(REG_SERVER_ID, 'REG_ANS', signed_tokens[id], my_key, client_key))
+        return
+
     print(f"Signing t_token for registration for voter {id}")
     blinded_t_token = int(t_token)
     signed = str(blind_sign(blinded_t_token, my_key))
+    with lock : signed_tokens[id] = signed
+
     print(f"Answering voter {id}")
     conn.sendall(construct_message(REG_SERVER_ID, 'REG_ANS', signed, my_key, client_key))
-
-def validate_ballot(id : int, text : str, conn : socket, client_key, my_key):
-    print(f"Voter {id}: requesting ballot validation")
-
-    blinded_m_BS = int(text)
-    signed = str(blind_sign(blinded_m_BS, my_key))
-
-    print(f"Validating ballot for voter {id}")
-    conn.sendall(construct_message(REG_SERVER_ID, 'FB_ANS', signed, my_key, client_key))
 
 def handle_client(conn : socket.socket, addr, client_id : int, my_key):
     client_key = None

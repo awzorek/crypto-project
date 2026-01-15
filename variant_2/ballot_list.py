@@ -23,3 +23,9 @@ class BallotList:
             if e['BS'] == BS and e['t'] == hash_t:
                 return verify_blind_signature(e['signed_t'], e['t'], reg_serv_pub_key)
         return False
+    
+    def check_if_voted(self, hash_t, signed_t):
+        for e in self.__list.values():
+            if e['t'] == hash_t and e['signed_t'] == signed_t:
+                return True
+        return False

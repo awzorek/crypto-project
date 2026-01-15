@@ -43,9 +43,16 @@ def check_and_publish_ballot(id, text, conn, client_key, my_key, reg_serv_pub_ke
         print("Blind signature verified")
     else:
         print("Token signature invalid")
+        conn.sendall(construct_message(BB_SERVER_ID, 'REJ', 'REJ', my_key, client_key))
+        return
+    
+    if b.check_if_voted(hash_t, signed_t):
+        print("Voter trying to vote again, rejecting ballot.")
+        conn.sendall(construct_message(BB_SERVER_ID, 'REJ', 'REJ', my_key, client_key))
         return
 
     b.append(BS, signed_t, hash_t)
+    print(f"Acknowledging the ballot got successfully published")
     conn.sendall(construct_message(BB_SERVER_ID, 'ACK', 'ACK', my_key, client_key))
 
 

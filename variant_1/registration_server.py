@@ -14,6 +14,8 @@ BUFFER_SIZE = 4096
 REG_SERVER_ID = 0
 
 client_id_counter = itertools.count(1)
+signed_ballots = {}
+lock = threading.Lock()
 
 def get_ballot():
     with open('ballot') as f:
@@ -29,10 +31,15 @@ def send_empty_ballot(id : int, conn : socket, client_key, my_key):
     conn.sendall(construct_message(REG_SERVER_ID, 'GEB_ANS', empty_ballot_json, my_key, client_key))
 
 def validate_ballot(id : int, text : str, conn : socket, client_key, my_key):
-    print(f"Voter {id}: requesting ballot validation")
+    if id in signed_ballots.keys():
+        print(f"Voter {id} trying to validate ballot again, resending already signed ballot.")
+        conn.sendall(construct_message(REG_SERVER_ID, 'FB_ANS', signed_ballots[id], my_key, client_key))
+        return
 
+    print(f"Voter {id}: requesting ballot validation")
     blinded_m_BS = int(text)
     signed = str(blind_sign(blinded_m_BS, my_key))
+    signed_ballots[id] = signed
 
     print(f"Validating ballot for voter {id}")
     conn.sendall(construct_message(REG_SERVER_ID, 'FB_ANS', signed, my_key, client_key))

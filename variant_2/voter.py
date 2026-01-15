@@ -65,6 +65,8 @@ def send_filled_ballot(s : socket, id : int, BS : str, hash_t, signed_t_token, b
     
     if code == 'ACK':
         print('Ballot received by ballot box server.')
+    elif code == 'REJ':
+        print('Ballot rejected by ballot box server.')
     else:
         print('Unexpected response from ballot box server.')
 
