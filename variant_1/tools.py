@@ -13,7 +13,10 @@ import json
 import math
 import os
 
-def hash(message): return SHA256.new(message.encode())
+def hash(message): 
+    if isinstance(message, bytes):
+        return SHA256.new(message)
+    return SHA256.new(message.encode())
 
 def get_random_token(): return SHA256.new(os.urandom(32))
 
@@ -98,12 +101,11 @@ def verify(signature, hash, public_key):
 def int_from_bytes(b: bytes) -> int: return int.from_bytes(b, byteorder='big')
 def bytes_from_int(i: int, length: int) -> bytes: return i.to_bytes(length, byteorder='big')
 
-def blind(t, public_key):
+def blind(hash, public_key):
     # public key of the signer
     e = public_key.e
     n = public_key.n
-    h = hash(t)
-    m = int_from_bytes(h.digest())
+    m = int_from_bytes(hash)
     if m >= n: m = m % n
 
     r = n

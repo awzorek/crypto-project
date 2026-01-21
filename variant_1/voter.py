@@ -55,7 +55,7 @@ def fill_the_ballot(BS0 : dict):
 def send_filled_ballot(s : socket, id : int, BS : str, serv_key, my_key):
     m = generate_aes_key()
     m_BS = aes_encrypt(BS.encode(), m)
-    h = hash(m_BS)
+    h = hash(m_BS).digest()
     blinded_m_BS, r = blind(h, serv_key)
     blinded_m_BS = str(blinded_m_BS)
 
