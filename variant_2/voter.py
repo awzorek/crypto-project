@@ -132,7 +132,7 @@ def main():
     sign_blinded_t_token = sign_t_token(id, s, str(blinded_t), reg_serv_pub_key, my_priv_key)
     signed_t_token = unblind(int(sign_blinded_t_token), r, reg_serv_pub_key)
 
-    print(f"Received signed t_token: {signed_t_token}")
+    # print(f"Received signed t_token: {signed_t_token}")
 
     disconnect(s, REGISTRATION_SERVER_PORT)
 

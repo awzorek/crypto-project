@@ -67,7 +67,7 @@ def main():
                 end_voting()
                 sys.exit(0)
             else: print('Wrong input. Try again.')
-    except KeyboardInterrupt:
+    except:
         print('\nExiting...')
         sys.exit(0)
 
