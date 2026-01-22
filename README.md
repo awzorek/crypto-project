@@ -1,4 +1,4 @@
-# Jak korzystać z głosowania w projekcie crypto-project (wariant 1)?
+# Jak korzystać z głosowania w projekcie *e-voting*?
 
 ## Instalacja bibliotek:
 Biblioteki do zainstalowania: `cryptography`
