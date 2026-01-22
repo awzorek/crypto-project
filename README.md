@@ -1,13 +1,24 @@
-# Jak korzystać z głosowania w projekcie *e-voting*?
+# Projekt *e-voting*
 
-## Instalacja bibliotek:
-Biblioteki do zainstalowania: `cryptography`
+## Wstęp
+Celem projektu była analiza, implementacja oraz porównanie dwóch algorytmów głosowania internetowego (*e-voting*), opartych na kilku mechanizmach kryptograficznych. Projekt koncentrował się na ocenie bezpieczeństwa, anonimowości, integralności głosu oraz odporności na manipulacje w obu podejściach.
 
-Można skorzystać z pliku `requirements.txt` w katalogu głównym.
+W ramach projektu zaimplementowano dwa warianty systemu:
+- **Wariant 1 (jednoetapowe głosowanie)**, w którym rejestracja i oddanie głosu odby-wają się w jednym procesie;
+- **Wariant 2 (dwuetapowe głosowanie)**, rozdzielające fazę rejestracji i fazę głosowa-nia oraz wprowadzające dodatkowy podmiot.
 
-`pip install -r requirements.txt`
+Całe wprowadzenie teoretyczne opisane jest w plikach `notes.pdf` i `Electronic Voting.pdf` oraz w raporcie projektu.
 
-## Przeprowadzenie głosowania (lokalnie)
+## Jak korzystać?
+
+### Uruchomienie
+```
+$ git clone https://github.com/awzorek/crypto-project.git
+$ cd crypto-project
+$ pip install -r requirements.txt
+```
+
+### Przeprowadzenie głosowania (lokalnie)
 1. Należy przejść do folderu `/variant_1` lub `/variant_2`.
 2. Należy uruchomić programy `registration_server.py` i `ballot_box_server.py`.
 3. Następnie trzeba uruchomić dowolną ilość programów `voter.py` *(aktuanie obowiązuje ograniczenie 7, ale można je łatwo podnieść)*.
